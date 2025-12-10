@@ -1,0 +1,195 @@
+﻿-- Create Database
+CREATE DATABASE coffee_management1abcd;
+GO
+
+USE [coffee_management1abcd];
+GO
+
+-- Category Table
+CREATE TABLE Category (
+    categoryID INT PRIMARY KEY IDENTITY(1,1),
+    categoryName VARCHAR(100) UNIQUE NOT NULL,
+    description NVARCHAR(255) NULL  -- Optional description for category
+);
+
+-- CoffeeProducts Table
+CREATE TABLE CoffeeProducts (
+    productID INT PRIMARY KEY IDENTITY(1,1),
+    productCode VARCHAR(50) UNIQUE NOT NULL,
+    productName VARCHAR(100) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    stock_quantity INT NOT NULL,
+    image_url VARCHAR(255),
+	categoryID INT,
+    FOREIGN KEY (categoryID) REFERENCES Category(categoryID)
+);
+
+-- Employees Table
+CREATE TABLE Employees (
+    employeeID INT PRIMARY KEY IDENTITY(1,1),
+    employeeCode VARCHAR(50) UNIQUE NOT NULL,
+    employeeName VARCHAR(100) NOT NULL,
+    position NVARCHAR(50),
+    authorityLevel NVARCHAR(50),
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    passwordchanged BIT DEFAULT 0
+);
+
+-- Customers Table
+CREATE TABLE Customers (
+    customerID INT PRIMARY KEY IDENTITY(1,1),
+    customerCode VARCHAR(50) UNIQUE NOT NULL,
+    customerName VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),
+    address NVARCHAR(255)
+);
+
+-- Imports Table
+CREATE TABLE Imports (
+    importID INT PRIMARY KEY IDENTITY(1,1),
+    employeeID INT,
+    importDate DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (employeeID) REFERENCES Employees(employeeID)
+);
+
+-- ImportDetail Table
+CREATE TABLE ImportDetail (
+    importDetailID INT PRIMARY KEY IDENTITY(1,1),
+    importID INT,
+    productID INT,
+    quantity INT NOT NULL,
+    importCost DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (importID) REFERENCES Imports(importID),
+    FOREIGN KEY (productID) REFERENCES CoffeeProducts(productID)
+);
+
+-- Orders Table
+CREATE TABLE Orders (
+    OrderID INT PRIMARY KEY IDENTITY(1,1),
+    OrderDate DATETIME NOT NULL,
+    EmployeeID INT,
+    CustomerID INT,
+    FOREIGN KEY (EmployeeID) REFERENCES Employees(EmployeeID),
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID)
+);
+
+-- OrderDetail Table
+CREATE TABLE OrderDetail (
+    OrderDetailID INT PRIMARY KEY IDENTITY(1,1),
+    OrderID INT,
+    ProductID INT,
+    QuantitySold INT NOT NULL,
+    FOREIGN KEY (OrderID) REFERENCES Orders(OrderID),
+    FOREIGN KEY (ProductID) REFERENCES CoffeeProducts(ProductID)
+);
+
+-- Insert Data into Category
+INSERT INTO Category (categoryName, description) VALUES 
+('Coffee', 'All types of coffee products'), 
+('Tea', 'Various types of tea'),
+('Juice', 'Fresh fruit juices');
+SELECT * FROM Category;
+-- Insert Data into CoffeeProducts
+
+INSERT INTO CoffeeProducts (productCode, productName, price, stock_quantity, image_url, categoryID) VALUES 
+('P001', 'Black Coffee', 30000, 100, 'image1.jpg',1),
+('P002', 'Milk Coffee', 35000, 80, 'image2.jpg',1),
+('P003', 'Mocha Coffee', 45000, 60, 'image3.jpg',1),
+('P004', 'Cappuccino Coffee', 40000, 70, 'image4.jpg',1),
+('P005', 'Latte Coffee', 42000, 65, 'image5.jpg',1);
+UPDATE CoffeeProducts
+SET price = 32000
+WHERE productCode = 'P001';
+SELECT * FROM CoffeeProducts;
+
+-- Insert Data into Employees
+INSERT INTO Employees (employeeCode, employeeName, position, authorityLevel, username, password, passwordchanged) VALUES 
+('E004', 'Tran Thi Tam', 'Staff', 'sale1', 'sale12', '2344', 1),
+('E001', 'Nguyen Van Hung', 'Manager', 'admin', 'admin1', '123', 1),
+('E002', 'Tran Thi Tam', 'Staff', 'sale1', 'sale1', '234', 1),
+('E003', 'Van Trung Hai', 'Staff', 'warehouse manager', 'warehouse1', '456', 1);
+SELECT * FROM Employees;
+
+-- Insert Data into Customers
+INSERT INTO Customers (customerCode, customerName, phone, address) VALUES 
+('C001', 'Nguyen Van Duy', '0123456789', 'Hanoi'),
+('C002', 'Tran Thi Mai', '0987654321', 'Ho Chi Minh City'),
+('C003', 'Nguyen Van Ngoc', '0123456789', 'Hai Phong'),
+('C004', 'Tran Ngoc Bich', '0987654321', 'Hanoi');
+SELECT * FROM Customers;
+
+-- Insert Data into Imports
+INSERT INTO Imports (employeeID, importDate) VALUES 
+(1, '2024-10-01'),
+(2, '2024-10-05');
+SELECT * FROM Imports;
+
+-- Insert Data into ImportDetail
+INSERT INTO ImportDetail (importID, productID, quantity, importCost) VALUES 
+(1, 1, 10, 2000),
+(2, 2, 5, 1000);
+SELECT * FROM ImportDetail;
+
+-- Insert Data into Orders
+INSERT INTO Orders (OrderDate, EmployeeID, CustomerID) VALUES 
+('2024-11-01', 1, 1),
+('2024-11-05', 2, 3),
+('2024-11-10', 1, 4);
+SELECT * FROM Orders;
+DELETE FROM Orders
+WHERE OrderID = 1;
+
+-- Insert Data into OrderDetail
+INSERT INTO OrderDetail (OrderID, ProductID, QuantitySold) VALUES 
+(2, 1, 5),
+(2, 2, 3),
+(3, 3, 2);
+SELECT * FROM OrderDetail;
+
+DECLARE @employeeID INT = 1; 
+
+SELECT 
+    o.OrderDate, 
+    e.employeeName, 
+    c.customerName
+FROM 
+    Orders o
+INNER JOIN 
+    Employees e ON o.EmployeeID = e.employeeID
+INNER JOIN 
+    Customers c ON o.CustomerID = c.customerID
+WHERE 
+    o.EmployeeID = 1;  -- Ensure this matches the correct data type
+
+INSERT INTO Orders (OrderDate, EmployeeID, CustomerID) 
+VALUES ('2024-11-15', 1, 2); 
+
+DECLARE @newOrderID INT = SCOPE_IDENTITY();
+
+INSERT INTO OrderDetail (OrderID, ProductID, QuantitySold) VALUES 
+(@newOrderID, 1, 2),  
+(@newOrderID, 2, 1); 
+
+
+SELECT * FROM Orders WHERE OrderID = @newOrderID;
+SELECT * FROM OrderDetail WHERE OrderID = @newOrderID;
+
+DECLARE @orderID INT = 2;
+
+SELECT 
+    od.OrderDetailID, 
+    o.OrderDate, 
+    c.customerName, 
+    p.productName, 
+    od.QuantitySold
+FROM 
+    OrderDetail od
+INNER JOIN 
+    Orders o ON od.OrderID = o.OrderID
+INNER JOIN 
+    Customers c ON o.CustomerID = c.customerID
+INNER JOIN 
+    CoffeeProducts p ON od.ProductID = p.productID
+WHERE 
+    o.OrderID = @orderID;
